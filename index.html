@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AgentHub internal administration prototype. Manage AI agents, reusable skills, and customer rentals.">
+  <title>Dashboard · AgentHub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-slate-50 font-sans text-sm text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
+  <div id="app">
+    <aside class="fixed inset-y-0 left-0 z-30 flex w-16 flex-col border-r border-slate-200 bg-white md:w-48 lg:w-60 dark:border-slate-700 dark:bg-slate-900">
+      <div class="flex h-20 shrink-0 items-center justify-center gap-3 px-3 md:justify-start md:px-6">
+        <span id="brand-icon" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white"></span>
+        <span class="hidden text-[22px] font-bold tracking-tight md:block">AgentHub<span class="text-indigo-600 dark:text-indigo-400">.</span></span>
+      </div>
+      <div class="mx-4 mb-8 hidden items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 md:flex dark:border-slate-700 dark:bg-slate-800">
+        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-xs font-semibold text-slate-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">AH</span>
+        <div class="min-w-0"><p class="text-xs font-semibold">Internal workspace</p><p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">Administration</p></div>
+      </div>
+      <div class="min-h-0 flex-1 overflow-y-auto px-2 md:px-3">
+        <p class="mb-3 hidden px-3 text-[10px] font-semibold tracking-[0.16em] text-slate-500 md:block dark:text-slate-400">WORKSPACE</p>
+        <nav id="navigation" aria-label="Main navigation" class="space-y-1.5"></nav>
+      </div>
+      <div class="hidden shrink-0 px-4 pb-5 pt-6 md:block">
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/60">
+          <p class="flex items-center gap-2 text-xs font-medium"><span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>Prototype environment</p>
+          <p class="mt-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">A safe space to explore.<br>All changes stay in this session.</p>
+        </div>
+      </div>
+      <div class="flex shrink-0 items-center justify-center gap-3 border-t border-slate-200 px-3 py-5 md:justify-start md:px-5 dark:border-slate-700">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">AD</span>
+        <div class="hidden md:block"><p class="text-xs font-semibold">Administrator</p><p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">AgentHub workspace</p></div>
+      </div>
+    </aside>
+
+    <header class="fixed left-16 right-0 top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 md:left-48 lg:left-60 lg:px-8 dark:border-slate-700 dark:bg-slate-900">
+      <div class="flex min-w-0 items-center gap-3">
+        <span class="hidden text-xs text-slate-500 xl:inline dark:text-slate-400">Workspace</span>
+        <span class="hidden text-slate-300 xl:inline dark:text-slate-600" aria-hidden="true">/</span>
+        <p id="header-title" class="text-sm font-semibold">Dashboard</p>
+      </div>
+      <div class="flex shrink-0 items-center gap-2 lg:gap-5">
+        <span class="flex max-w-[170px] items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[10px] leading-4 text-slate-500 lg:max-w-none lg:text-[11px] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true"></span>
+          Prototype - changes reset on reload
+        </span>
+        <div class="h-6 w-px bg-slate-200 dark:bg-slate-700" aria-hidden="true"></div>
+        <button id="theme-toggle" type="button" aria-label="Dark mode" aria-pressed="false" class="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:focus-visible:ring-indigo-400"></button>
+      </div>
+    </header>
+
+    <main id="main" class="ml-16 min-h-screen px-4 pb-6 pt-24 md:ml-48 lg:ml-60 lg:px-8 lg:pt-28">
+      <div id="sections"></div>
+      <footer class="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5 text-[11px] text-slate-500 dark:border-slate-800 dark:text-slate-400">
+        <p class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-indigo-400" aria-hidden="true"></span>AgentHub Admin <span class="mx-1 text-slate-300 dark:text-slate-700">/</span> Demo workspace</p>
+        <p>Synthetic data. Real possibilities.</p>
+      </footer>
+    </main>
+  </div>
+  <div id="modal-root"></div>
+  <script>
+    'use strict';
+
+    const users = [
+      { id: 'U001', name: 'Maya Chen', company: 'Northstar Retail', email: 'maya.chen@northstar.example', plan: 'Growth', status: 'Active', joined: '2026-06-10' },
+      { id: 'U002', name: 'Luis Ortega', company: 'Harbor Finance', email: 'luis.ortega@harbor.example', plan: 'Enterprise', status: 'Active', joined: '2026-05-18' },
+      { id: 'U003', name: 'Priya Shah', company: 'Cedar Legal', email: 'priya.shah@cedar.example', plan: 'Starter', status: 'Suspended', joined: '2026-07-01' },
+      { id: 'U004', name: 'Noah Williams', company: 'Atlas Logistics', email: 'noah.williams@atlas.example', plan: 'Growth', status: 'Active', joined: '2026-06-22' },
+      { id: 'U005', name: 'Emma Dubois', company: 'Lumen Studio', email: 'emma.dubois@lumen.example', plan: 'Starter', status: 'Invited', joined: '2026-09-12' }
+    ];
+    const skills = [
+      { id: 'S001', name: 'Web Browsing', description: 'Collect information from approved websites.', detail: 'Research approved public sources and summarize findings with source references.', price: 6000, icon: 'globe' },
+      { id: 'S002', name: 'Document Reading', description: 'Extract and summarize document content.', detail: 'Read supplied business documents, identify key facts, and summarize their contents.', price: 4000, icon: 'document' },
+      { id: 'S003', name: 'Calendar Management', description: 'Organize events and scheduling requests.', detail: 'Prepare scheduling suggestions and manage approved calendar events without double booking.', price: 5000, icon: 'calendar' },
+      { id: 'S004', name: 'Business Reporting', description: 'Prepare structured business summaries.', detail: 'Turn supplied operational data into structured reports highlighting trends and exceptions.', price: 10000, icon: 'chart' }
+    ];
+    const agents = [
+      { id: 'A001', name: 'Retail Concierge', owner: 'U001', status: 'active', skills: ['S001', 'S002', 'S003'], prompt: 'You are Retail Concierge for Northstar Retail. Research approved public product sources, summarize supplied documents, and propose calendar events. Ask for administrator approval before changes affecting customers. Report missing information clearly.' },
+      { id: 'A002', name: 'Finance Analyst', owner: 'U002', status: 'active', skills: ['S002', 'S004'], prompt: 'You are Finance Analyst for Harbor Finance. Read supplied financial documents and prepare structured business reports. Distinguish documented facts from assumptions. Do not execute payments or provide unsupported figures.' },
+      { id: 'A003', name: 'Legal Document Assistant', owner: 'U003', status: 'inactive', skills: ['S002'], prompt: 'You are Legal Document Assistant for Cedar Legal. Summarize supplied documents and identify clauses needing human review. Do not present summaries as legal advice. Do not access materials outside the supplied collection.' },
+      { id: 'A004', name: 'Logistics Coordinator', owner: 'U004', status: 'failing', skills: ['S001', 'S003'], prompt: 'You are Logistics Coordinator for Atlas Logistics. Review approved public logistics information and prepare scheduling updates. Require approval before calendar changes. Surface timeouts and scheduling conflicts without hiding failures.' }
+    ];
+    const rentals = [
+      { id: 'R001', customer: 'U001', agent: 'A001', start: '2026-09-01', end: '2026-09-30', paid: '2026-09-01', base: 30000, coupon: 'WELCOME45', discount: 4500, skills: [{ id: 'S001', price: 6000 }, { id: 'S002', price: 4000 }, { id: 'S003', price: 5000 }] },
+      { id: 'R002', customer: 'U002', agent: 'A002', start: '2026-09-01', end: '2026-09-30', paid: '2026-09-01', base: 40000, coupon: null, discount: 0, skills: [{ id: 'S002', price: 4000 }, { id: 'S004', price: 10000 }] },
+      { id: 'R003', customer: 'U003', agent: 'A003', start: '2026-08-01', end: '2026-08-31', paid: '2026-08-01', base: 25000, coupon: 'LEGAL20', discount: 2000, skills: [{ id: 'S002', price: 4000 }] },
+      { id: 'R004', customer: 'U004', agent: 'A004', start: '2026-09-01', end: '2026-09-30', paid: '2026-09-02', base: 35000, coupon: 'ATLAS60', discount: 6000, skills: [{ id: 'S001', price: 6000 }, { id: 'S003', price: 5000 }] }
+    ];
+    const errors = [
+      { id: 'E001', timestamp: '2026-09-14 14:32:10', agent: 'A004', type: 'UpstreamTimeout', severity: 'Critical', description: 'Route research exceeded its execution deadline.', resolution: 'Open', trace: [
+        'UpstreamTimeout: route research exceeded 30000ms.',
+        'Execution exec-4001; agent A004; skill S001.',
+        'at WebBrowsing.collectSources (skills/web-browsing:42)',
+        'at LogisticsCoordinator.run (agents/logistics-coordinator:18)',
+        'Outcome: execution stopped after 3 attempts; operator review required.'
+      ] },
+      { id: 'E002', timestamp: '2026-09-14 14:25:00', agent: 'A001', type: 'RateLimitExceeded', severity: 'Warning', description: 'Product research was delayed by a source rate limit.', resolution: 'Open', trace: [
+        'RateLimitExceeded: approved product source returned a rate-limit response.',
+        'Execution exec-1002; agent A001; skill S001.',
+        'at WebBrowsing.collectSources (skills/web-browsing:42)',
+        'at RetailConcierge.run (agents/retail-concierge:21)',
+        'Outcome: retry queued for a later execution; agent remains active.'
+      ] },
+      { id: 'E003', timestamp: '2026-09-13 09:10:05', agent: 'A002', type: 'DocumentParseError', severity: 'Warning', description: 'A supplied report contained an unreadable table.', resolution: 'Open', trace: [
+        'DocumentParseError: unreadable table in quarterly-summary.pdf, page 4.',
+        'Execution exec-2003; agent A002; skill S002.',
+        'at DocumentReading.parseTable (skills/document-reading:63)',
+        'at FinanceAnalyst.run (agents/finance-analyst:27)',
+        'Outcome: document skipped; remaining reports processed.'
+      ] },
+      { id: 'E004', timestamp: '2026-09-12 16:45:20', agent: 'A004', type: 'CalendarConflict', severity: 'Warning', description: 'A proposed dispatch slot overlapped an existing event.', resolution: 'Open', trace: [
+        'CalendarConflict: proposed dispatch slot overlaps event dispatch-217.',
+        'Execution exec-4004; agent A004; skill S003.',
+        'at CalendarManagement.validateSlot (skills/calendar-management:35)',
+        'at LogisticsCoordinator.run (agents/logistics-coordinator:24)',
+        'Outcome: proposed change rejected; existing calendar unchanged.'
+      ] },
+      { id: 'E005', timestamp: '2026-09-10 11:02:00', agent: 'A001', type: 'RetryRecovered', severity: 'Info', description: 'A document read succeeded after one retry.', resolution: 'Resolved', trace: [
+        'RetryRecovered: document read succeeded on attempt 2.',
+        'Execution exec-1005; agent A001; skill S002.',
+        'at DocumentReading.read (skills/document-reading:28)',
+        'at RetailConcierge.run (agents/retail-concierge:29)',
+        'Outcome: execution completed; informational record acknowledged.'
+      ] },
+      { id: 'E006', timestamp: '2026-08-28 08:20:15', agent: 'A003', type: 'DocumentParseError', severity: 'Warning', description: 'An archived agreement could not be decoded.', resolution: 'Resolved', trace: [
+        'DocumentParseError: unsupported encoding in archived-agreement.pdf.',
+        'Execution exec-3006; agent A003; skill S002.',
+        'at DocumentReading.decode (skills/document-reading:19)',
+        'at LegalDocumentAssistant.run (agents/legal-document-assistant:16)',
+        'Outcome: document returned for manual review; historical record acknowledged.'
+      ] }
+    ];
+    const destinations = [
+      { id: 'dashboard', name: 'Dashboard', icon: 'grid', description: 'A clear view of your workspace. September 2026 - USD' },
+      { id: 'users', name: 'User Management', icon: 'users', description: 'Manage customer accounts and the businesses behind your agents.' },
+      { id: 'agents', name: 'Agent Management', icon: 'agent', description: 'Monitor your agents, explore their skills, and fine-tune their instructions.' },
+      { id: 'skills', name: 'Skills', icon: 'layers', description: 'Reusable capabilities that make every agent more useful.' },
+      { id: 'rentals', name: 'Agent Rentals', icon: 'contract', description: 'A complete view of customer contracts, included skills, and payments.' },
+      { id: 'errors', name: 'Error Log', icon: 'alert', description: 'Understand execution issues and keep track of what needs attention.' }
+    ];
+    const iconPaths = {
+      brand: '<rect x="4" y="4" width="11" height="11" rx="2"/><rect x="9" y="9" width="11" height="11" rx="2"/>',
+      grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+      users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M15 3.13a4 4 0 0 1 0 7.75"/><circle cx="9" cy="7" r="4"/>',
+      agent: '<rect x="4" y="7" width="16" height="13" rx="3"/><path d="M12 3v4M2 12v4m20-4v4m-14 0h8"/><path d="M8 11h.01M16 11h.01" stroke-width="3" stroke-linecap="round"/>',
+      layers: '<path d="m12 3 10 5-10 5L2 8l10-5Zm-10 9 10 5 10-5M2 16l10 5 10-5"/>',
+      contract: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h3"/>',
+      alert: '<path d="m10.3 3.8-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.2l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/>',
+      money: '<path d="M12 3v18m4-14H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 0 0-7M8 17h6.5"/>',
+      tag: '<path d="M20 13 11 4H4v7l9 9a2 2 0 0 0 3 0l4-4a2 2 0 0 0 0-3Z"/><circle cx="7.5" cy="7.5" r=".8"/>',
+      calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18M8 15h2m4 0h2m-8 3h2"/>',
+      chart: '<path d="M4 3v17h17M9 15v-4m5 4V7m5 8v-6"/>',
+      globe: '<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/>',
+      document: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 0v6h6M8 12h8M8 16h6"/>',
+      chevron: '<path d="m6 9 6 6 6-6"/>',
+      moon: '<path d="M21 12.8A9 9 0 0 1 11.2 3 9 9 0 1 0 21 12.8Z"/>',
+      sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',
+      close: '<path d="m6 6 12 12M6 18 18 6"/>',
+      info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/>',
+      check: '<path d="m5 12 4 4L19 6"/>',
+      arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
+      lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
+    };
+    const focus = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-indigo-400 dark:focus-visible:ring-offset-slate-900';
+    const muted = 'text-slate-500 dark:text-slate-400';
+    const panelClass = 'rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-200/30 dark:border-slate-700 dark:bg-slate-900 dark:shadow-none';
+    const secondaryClass = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
+    const primaryClass = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-medium text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600';
+    const dangerClass = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-rose-600 px-4 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-600';
+    const state = { section: 'dashboard', expanded: new Set(), menu: null, modal: null, feedback: {} };
+    const money = cents => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+    const date = value => new Intl.DateTimeFormat('en-US', { month: 'short', day: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(new Date(value + 'T00:00:00Z'));
+    const find = (collection, id) => {
+      const record = collection.find(item => item.id === id);
+      if (!record) throw new Error('Missing fixture record: ' + id);
+      return record;
+    };
+    const titleCase = value => value.charAt(0).toUpperCase() + value.slice(1);
+    const subtotal = rental => rental.base + rental.skills.reduce((sum, skill) => sum + skill.price, 0);
+    const total = rental => subtotal(rental) - rental.discount;
+    const rentalStatus = rental => rental.start <= '2026-09-15' && rental.end >= '2026-09-15' ? 'Active' : 'Expired';
+    const assignedAgents = skill => agents.filter(agent => agent.skills.includes(skill.id));
+
+    function el(tag, classes = '', text, attributes = {}) {
+      const node = document.createElement(tag);
+      if (classes) node.className = classes;
+      if (text !== undefined && text !== null) node.textContent = text;
+      Object.entries(attributes).forEach(([name, value]) => node.setAttribute(name, value));
+      return node;
+    }
+    function icon(name, classes = 'h-5 w-5') {
+      const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      Object.entries({ viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true', class: classes + ' shrink-0' }).forEach(([key, value]) => node.setAttribute(key, value));
+      node.innerHTML = iconPaths[name];
+      return node;
+    }
+    function button(text, classes, action, attributes = {}) {
+      const node = el('button', classes + ' ' + focus, text, { type: 'button', ...attributes });
+      node.addEventListener('click', action);
+      return node;
+    }
+    function badge(label) {
+      const colors = {
+        Active: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+        Resolved: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+        Suspended: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300',
+        Warning: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300',
+        Failing: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300',
+        Critical: 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950 dark:text-rose-300',
+        Info: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-300',
+        Open: 'border-slate-300 bg-white text-slate-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300'
+      };
+      const colorsDefault = 'border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300';
+      const node = el('span', 'inline-flex w-fit items-center gap-1.5 whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-medium ' + (colors[label] || colorsDefault));
+      node.append(el('span', 'h-1.5 w-1.5 rounded-full bg-current', null, { 'aria-hidden': 'true' }), document.createTextNode(label));
+      return node;
+    }
+    function chips(ids) {
+      const list = el('div', 'flex flex-wrap gap-2');
+      ids.forEach(id => list.append(el('span', 'rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300', find(skills, id).name)));
+      return list;
+    }
+    function avatar(user) {
+      const shades = {
+        U001: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300',
+        U002: 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300',
+        U003: 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+        U004: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
+        U005: 'bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300'
+      };
+      return el('span', 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ' + shades[user.id], user.name.split(' ').map(word => word[0]).join(''), { 'aria-hidden': 'true' });
+    }
+    function person(user, withCompany = false) {
+      const container = el('div', 'flex items-center gap-3');
+      const text = el('div', 'min-w-0');
+      text.append(el('p', 'font-medium', user.name));
+      if (withCompany) text.append(el('p', 'mt-1 text-xs ' + muted, user.company));
+      container.append(avatar(user), text);
+      return container;
+    }
+    function sectionShell(destination) {
+      const section = el('section', 'space-y-6', null, { id: destination.id, 'aria-labelledby': destination.id + '-heading' });
+      section.hidden = destination.id !== state.section;
+      const headingRow = el('div', 'flex flex-wrap items-center justify-between gap-4');
+      const headingCopy = el('div');
+      headingCopy.append(
+        el('p', 'mb-2 text-[10px] font-semibold tracking-[0.16em] text-slate-500 dark:text-slate-400', destination.id === 'dashboard' ? 'WORKSPACE OVERVIEW' : 'WORKSPACE ADMINISTRATION'),
+        el('h1', 'rounded text-2xl font-bold tracking-tight ' + focus, destination.name, { id: destination.id + '-heading', tabindex: '-1' }),
+        el('p', 'mt-2 text-[13px] leading-6 ' + muted, destination.description)
+      );
+      headingRow.append(headingCopy);
+      if (destination.id === 'dashboard') {
+        const calendar = el('div', 'flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300');
+        calendar.append(icon('calendar', 'h-4 w-4'), document.createTextNode('September 2026'));
+        headingRow.append(calendar);
+      }
+      section.append(headingRow, el('div', '', null, { id: destination.id + '-feedback', role: 'status', 'aria-live': 'polite' }));
+      section.lastChild.hidden = true;
+      return section;
+    }
+    function tablePanel(section, title, note, headers, width, rowCount) {
+      const panel = el('div', panelClass);
+      const heading = el('div', 'flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-5 dark:border-slate-700');
+      const label = el('div', 'flex items-center gap-2.5');
+      label.append(el('h2', 'text-base font-semibold', title), el('span', 'rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400', String(rowCount)));
+      heading.append(label, el('p', 'text-xs ' + muted, note));
+      const scroll = el('div', 'overflow-x-auto rounded-b-xl ' + focus, null, { tabindex: '0', role: 'region', 'aria-label': title + ' table, scroll horizontally to see all columns' });
+      const table = el('table', 'w-full border-collapse text-left text-[13px] ' + width);
+      table.append(el('caption', 'sr-only', title));
+      const thead = el('thead', 'bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400');
+      const row = el('tr');
+      headers.forEach(header => row.append(el('th', 'px-5 py-3.5 font-semibold ' + (header === 'Total paid' ? 'text-right' : header === 'Actions' ? 'text-center' : ''), header, { scope: 'col' })));
+      thead.append(row);
+      const tbody = el('tbody', 'divide-y divide-slate-100 dark:divide-slate-800');
+      table.append(thead, tbody);
+      scroll.append(table);
+      const footer = el('div', 'flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-5 py-4 text-[11px] ' + muted + ' dark:border-slate-700');
+      footer.append(el('span', '', 'Showing all ' + rowCount + ' records'), el('span', '', 'Session-local sample data'));
+      panel.append(heading, scroll, footer);
+      section.append(panel);
+      return tbody;
+    }
+    function cell(content, classes = '') {
+      const td = el('td', 'px-5 py-4 align-middle ' + classes);
+      td.append(content instanceof Node ? content : document.createTextNode(String(content)));
+      return td;
+    }
+    function empty(section, noun) {
+      section.append(el('div', panelClass + ' p-8 text-center ' + muted, 'No ' + noun + ' to display.'));
+    }
+    function closeMenu(restoreFocus = false) {
+      if (!state.menu) return;
+      const { panel, trigger } = state.menu;
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      state.menu = null;
+      if (restoreFocus) trigger.focus();
+    }
+    function actionControl(kind, record, lastRow = false) {
+      const container = el('div', 'relative flex justify-end');
+      const trigger = button('⋮', 'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-xl leading-none text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800', () => {
+        const wasOpen = state.menu && state.menu.trigger === trigger;
+        closeMenu();
+        if (!wasOpen) {
+          panel.hidden = false;
+          trigger.setAttribute('aria-expanded', 'true');
+          state.menu = { panel, trigger, container };
+        }
+      }, { id: 'actions-' + record.id, 'aria-label': 'Actions for ' + (record.name || record.id), 'aria-expanded': 'false', 'aria-controls': 'menu-' + record.id });
+      // Table menus open beside their trigger to stay inside local scroll containers.
+      const placement = ['users', 'rentals', 'errors'].includes(kind)
+        ? (lastRow ? 'right-12 bottom-0' : 'right-12 top-0')
+        : 'right-0 top-full mt-1';
+      const panel = el('div', 'absolute z-10 w-44 rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10 dark:border-slate-600 dark:bg-slate-800 ' + placement, null, { id: 'menu-' + record.id });
+      panel.hidden = true;
+      const options = kind === 'agents' ? ['Configure', 'Delete'] : kind === 'rentals' ? ['View Details'] : kind === 'errors' ? ['View Details', 'Mark as Resolved'] : ['View Details', 'Delete'];
+      options.forEach(label => {
+        const action = button(label, 'flex min-h-11 w-full items-center rounded-md px-3 text-left text-xs font-medium disabled:cursor-not-allowed disabled:opacity-40 ' + (label === 'Delete' ? 'text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700'), () => {
+          closeMenu();
+          if (label === 'Delete') showDelete(kind, record, trigger);
+          else if (label === 'Mark as Resolved') resolveError(record, trigger);
+          else showDetails(kind, record, trigger);
+        });
+        action.disabled = label === 'Mark as Resolved' && record.resolution === 'Resolved';
+        panel.append(action);
+      });
+      container.append(trigger, panel);
+      return container;
+    }
+    function renderDashboard(section) {
+      const receipts = rentals.filter(rental => rental.paid.startsWith('2026-09'));
+      const metrics = [
+        { label: 'Total revenue generated this month', value: money(receipts.reduce((sum, rental) => sum + total(rental), 0)), icon: 'money', tag: 'MONTHLY REVENUE', description: 'Net payments received this month', border: 'border-t-emerald-400 dark:border-t-emerald-500', color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-300' },
+        { label: 'Total loss caused by discounts and coupons', value: money(receipts.reduce((sum, rental) => sum + rental.discount, 0)), icon: 'tag', tag: 'DISCOUNTS & COUPONS', description: 'Discounts and coupons applied this month', border: 'border-t-amber-400 dark:border-t-amber-500', color: 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300' },
+        { label: 'Number of active agents across all customers', value: String(agents.filter(agent => agent.status === 'active').length), icon: 'agent', tag: 'ACTIVE AGENTS', description: 'Operational and ready to work', border: 'border-t-indigo-400 dark:border-t-indigo-500', color: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-300' },
+        { label: 'Number of agents currently marked as failing', value: String(agents.filter(agent => agent.status === 'failing').length), icon: 'alert', tag: 'FAILING AGENTS', description: 'Require administrator attention', border: 'border-t-rose-400 dark:border-t-rose-500', color: 'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-300' }
+      ];
+      const grid = el('div', 'grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4');
+      metrics.forEach(metric => {
+        const card = el('article', panelClass + ' flex min-h-56 flex-col border-t-2 p-4 xl:p-5 ' + metric.border);
+        const top = el('div', 'mb-4 flex items-center justify-between gap-2');
+        const iconBox = el('span', 'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ' + metric.color);
+        iconBox.append(icon(metric.icon));
+        top.append(iconBox, el('span', 'text-right text-[9px] font-semibold tracking-wider ' + muted, metric.tag));
+        card.append(top, el('h2', 'max-w-[220px] text-sm leading-5 text-slate-600 dark:text-slate-300', metric.label), el('p', 'mb-4 mt-3 text-[26px] font-semibold tracking-tight tabular-nums xl:text-3xl', metric.value), el('p', 'mt-auto border-t border-slate-100 pt-3 text-[10px] leading-5 ' + muted + ' dark:border-slate-800', metric.description));
+        grid.append(card);
+      });
+      const activity = el('div', panelClass + ' overflow-hidden');
+      const activityHeader = el('div', 'flex flex-wrap items-start justify-between gap-3 px-6 pb-4 pt-6');
+      const title = el('div');
+      title.append(el('h2', 'text-lg font-semibold tracking-tight', 'Weekly activity'), el('p', 'mt-1 text-xs ' + muted, 'A week in the life of your agents.'));
+      const range = el('p', 'flex items-center gap-2 text-xs ' + muted);
+      range.append(icon('calendar', 'h-4 w-4'), document.createTextNode('September 7-13, 2026'));
+      activityHeader.append(title, range);
+      const chart = el('div', 'relative mx-6 mt-3 h-64 overflow-hidden rounded-lg border border-dashed border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-950/50');
+      const gridlines = el('div', 'pointer-events-none absolute inset-0 grid grid-cols-7 divide-x divide-dashed divide-slate-200/70 dark:divide-slate-800', null, { 'aria-hidden': 'true' });
+      for (let i = 0; i < 7; i++) gridlines.append(el('div', 'grid grid-rows-4 divide-y divide-dashed divide-slate-200/70 dark:divide-slate-800'));
+      for (const column of gridlines.children) for (let i = 0; i < 4; i++) column.append(el('div'));
+      const center = el('div', 'absolute inset-0 flex flex-col items-center justify-center px-3 text-center');
+      const chartIcon = el('span', 'mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-indigo-500 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-indigo-400');
+      chartIcon.append(icon('chart', 'h-6 w-6'));
+      center.append(chartIcon, el('h3', 'text-sm font-semibold text-slate-700 dark:text-slate-200', 'Weekly agent activity chart'), el('p', 'mt-2 text-xs ' + muted, 'Your workspace activity, at a glance.'), el('span', 'mt-4 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400', 'Placeholder - sample visualization only'));
+      chart.append(gridlines, center);
+      const days = el('div', 'mx-6 mb-6 mt-3 grid grid-cols-7 text-center text-[11px] ' + muted);
+      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(day => days.append(el('span', '', day)));
+      const chartFooter = el('div', 'flex items-center gap-2 border-t border-slate-100 px-6 py-4 text-[11px] ' + muted + ' dark:border-slate-800');
+      chartFooter.append(icon('info', 'h-3.5 w-3.5'), document.createTextNode('Activity reporting is a preview. No live execution data is connected.'));
+      activity.append(activityHeader, chart, days, chartFooter);
+      section.append(grid, activity);
+    }
+    function renderUsers(section) {
+      if (!users.length) return empty(section, 'users');
+      const tbody = tablePanel(section, 'All users', 'Your customer directory', ['Name', 'Email', 'Plan', 'Status', 'Actions'], 'min-w-[640px]', users.length);
+      users.forEach((user, index) => {
+        const row = el('tr', 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40');
+        row.append(cell(person(user), 'whitespace-nowrap'), cell(user.email, muted), cell(user.plan), cell(badge(user.status)), cell(actionControl('users', user, index === users.length - 1), 'w-16'));
+        tbody.append(row);
+      });
+    }
+    function renderAgents(section) {
+      if (!agents.length) return empty(section, 'agents');
+      const list = el('div', 'space-y-4');
+      agents.forEach(agent => {
+        const owner = find(users, agent.owner);
+        const card = el('article', panelClass);
+        const header = el('div', 'flex flex-wrap items-center gap-3 p-5');
+        const agentIcon = el('span', 'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-400');
+        agentIcon.append(icon('agent', 'h-6 w-6'));
+        const identity = el('div', 'min-w-0 flex-1 basis-44');
+        identity.append(el('h2', 'text-base font-semibold', agent.name), el('p', 'mt-1 text-xs leading-5 ' + muted, owner.name + ' · ' + owner.company));
+        const actions = el('div', 'ml-auto flex flex-wrap items-center gap-3');
+        const expanded = state.expanded.has(agent.id);
+        const toggle = button('', 'flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800', () => toggleSkills(agent, toggle, body), { 'aria-expanded': String(expanded), 'aria-controls': 'skills-' + agent.id });
+        toggle.append(el('span', '', (expanded ? 'Hide' : 'Show') + ' skills (' + agent.skills.length + ')'), icon('chevron', 'h-4 w-4 transition-transform duration-[250ms] motion-reduce:transition-none' + (expanded ? ' rotate-180' : '')));
+        actions.append(badge(titleCase(agent.status)), toggle, actionControl('agents', agent));
+        header.append(agentIcon, identity, actions);
+        const body = el('div', 'grid transition-[grid-template-rows,opacity] duration-[250ms] ease-in-out motion-reduce:transition-none ' + (expanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 invisible'), null, { id: 'skills-' + agent.id, 'aria-hidden': String(!expanded) });
+        body.inert = !expanded;
+        const inner = el('div', 'min-h-0 overflow-hidden');
+        const content = el('div', 'border-t border-slate-100 px-5 py-4 dark:border-slate-800');
+        content.append(el('p', 'mb-3 text-[10px] font-semibold tracking-wider ' + muted, 'ASSIGNED SKILLS'), chips(agent.skills));
+        inner.append(content);
+        body.append(inner);
+        body.addEventListener('transitionend', event => {
+          if (event.target === body && !state.expanded.has(agent.id)) body.classList.add('invisible');
+        });
+        card.append(header, body);
+        list.append(card);
+      });
+      section.append(list);
+      const hint = el('p', 'flex items-center gap-2 text-xs ' + muted);
+      hint.append(icon('info', 'h-4 w-4'), document.createTextNode('Configuration changes apply to this prototype session only.'));
+      section.append(hint);
+    }
+    function toggleSkills(agent, toggle, body) {
+      const expanded = !state.expanded.has(agent.id);
+      if (expanded) state.expanded.add(agent.id);
+      else state.expanded.delete(agent.id);
+      toggle.setAttribute('aria-expanded', String(expanded));
+      toggle.firstChild.textContent = (expanded ? 'Hide' : 'Show') + ' skills (' + agent.skills.length + ')';
+      toggle.lastChild.classList.toggle('rotate-180', expanded);
+      body.setAttribute('aria-hidden', String(!expanded));
+      body.inert = !expanded;
+      body.classList.remove('invisible');
+      body.classList.toggle('grid-rows-[1fr]', expanded);
+      body.classList.toggle('opacity-100', expanded);
+      body.classList.toggle('grid-rows-[0fr]', !expanded);
+      body.classList.toggle('opacity-0', !expanded);
+      if (!expanded && matchMedia('(prefers-reduced-motion: reduce)').matches) body.classList.add('invisible');
+    }
+    function renderSkills(section) {
+      const info = el('div', 'flex items-start gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-5 text-indigo-900 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-200');
+      const text = el('div');
+      text.append(el('h2', 'text-sm font-semibold', 'What is a skill?'), el('p', 'mt-1.5 max-w-3xl text-[13px] leading-6 text-indigo-800/90 dark:text-indigo-300', 'A skill is a reusable capability assigned to an AI agent, such as browsing the web, reading documents, or managing a calendar. Rental contracts specify which skills are included and their prices.'));
+      info.append(icon('info'), text);
+      section.append(info);
+      if (!skills.length) return empty(section, 'skills');
+      const catalogTitle = el('div', 'flex items-center gap-2.5');
+      catalogTitle.append(el('h2', 'text-lg font-semibold', 'Skill catalog'), el('span', 'rounded-md bg-slate-100 px-2 py-1 text-xs ' + muted + ' dark:bg-slate-800', String(skills.length)));
+      section.append(catalogTitle);
+      const grid = el('div', 'grid grid-cols-1 gap-4 md:grid-cols-2');
+      skills.forEach(skill => {
+        const card = el('article', panelClass + ' p-5');
+        const top = el('div', 'mb-4 flex items-center justify-between');
+        const tile = el('span', 'flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-400');
+        tile.append(icon(skill.icon));
+        top.append(tile, actionControl('skills', skill));
+        card.append(top, el('h3', 'text-base font-semibold', skill.name), el('p', 'mb-6 mt-2 min-h-10 text-[13px] leading-5 ' + muted, skill.description));
+        const usage = el('div', 'flex items-center gap-2 border-t border-slate-100 pt-4 text-xs ' + muted + ' dark:border-slate-800');
+        usage.append(icon('agent', 'h-4 w-4'), document.createTextNode('Used by ' + assignedAgents(skill).length + ' agents'));
+        card.append(usage);
+        grid.append(card);
+      });
+      section.append(grid);
+    }
+    function renderRentals(section) {
+      if (!rentals.length) return empty(section, 'contracts');
+      const tbody = tablePanel(section, 'All contracts', 'Prices in USD', ['Customer', 'Rented agent', 'Contracted skills', 'Start date', 'End date', 'Total paid', 'Status', 'Actions'], 'min-w-[960px]', rentals.length);
+      rentals.forEach((rental, index) => {
+        const row = el('tr', 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40');
+        const agentCell = el('div');
+        agentCell.append(el('p', 'font-medium', find(agents, rental.agent).name), el('p', 'mt-1 text-[11px] ' + muted, rental.id));
+        row.append(cell(person(find(users, rental.customer), true), 'min-w-[190px]'), cell(agentCell, 'min-w-[150px]'), cell(chips(rental.skills.map(skill => skill.id)), 'min-w-[190px]'), cell(date(rental.start), 'whitespace-nowrap text-xs ' + muted), cell(date(rental.end), 'whitespace-nowrap text-xs ' + muted), cell(money(total(rental)), 'text-right font-semibold tabular-nums'), cell(badge(rentalStatus(rental))), cell(actionControl('rentals', rental, index === rentals.length - 1)));
+        tbody.append(row);
+      });
+    }
+    function renderErrors(section) {
+      if (!errors.length) return empty(section, 'errors');
+      const tbody = tablePanel(section, 'Execution log', 'All timestamps in UTC', ['Timestamp (UTC)', 'Agent', 'Error type', 'Severity', 'Description', 'Resolution', 'Actions'], 'min-w-[1000px]', errors.length);
+      [...errors].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).forEach((error, index) => {
+        const row = el('tr', 'hover:bg-slate-50/70 dark:hover:bg-slate-800/40');
+        row.append(cell(error.timestamp + ' UTC', 'min-w-[145px] text-xs leading-5 tabular-nums ' + muted), cell(find(agents, error.agent).name, 'min-w-[145px] font-medium'), cell(error.type, 'break-words font-mono text-[11px] ' + muted), cell(badge(error.severity)), cell(error.description, 'min-w-[215px] text-xs leading-5 ' + muted), cell(badge(error.resolution)), cell(actionControl('errors', error, index === errors.length - 1)));
+        tbody.append(row);
+      });
+      const hint = el('p', 'flex items-start gap-2 text-xs leading-5 ' + muted);
+      hint.append(icon('info', 'h-4 w-4'), document.createTextNode('Resolving a log entry acknowledges the issue. It does not change the agent\'s operational status.'));
+      section.append(hint);
+    }
+    const renderers = { dashboard: renderDashboard, users: renderUsers, agents: renderAgents, skills: renderSkills, rentals: renderRentals, errors: renderErrors };
+    function renderSection(id) {
+      const destination = find(destinations, id);
+      const section = sectionShell(destination);
+      renderers[id](section);
+      const previous = document.getElementById(id);
+      if (previous) previous.replaceWith(section);
+      else document.getElementById('sections').append(section);
+      if (state.feedback[id]) paintFeedback(id);
+    }
+    function navigate(id) {
+      closeMenu();
+      state.section = id;
+      destinations.forEach(destination => {
+        document.getElementById(destination.id).hidden = destination.id !== id;
+        const nav = document.getElementById('nav-' + destination.id);
+        nav.className = 'flex min-h-11 w-full items-center gap-3 rounded-lg border-l-2 px-3 py-3 text-left text-[13px] ' + focus + ' ' + (destination.id === id
+          ? 'border-indigo-600 bg-indigo-50 font-semibold text-indigo-700 dark:border-indigo-400 dark:bg-indigo-950 dark:text-indigo-300'
+          : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100');
+        if (destination.id === id) nav.setAttribute('aria-current', 'page');
+        else nav.removeAttribute('aria-current');
+      });
+      const title = find(destinations, id).name;
+      document.getElementById('header-title').textContent = title;
+      document.title = title + ' · AgentHub';
+      window.scrollTo(0, 0);
+      document.getElementById(id + '-heading').focus({ preventScroll: true });
+    }
+    function paintFeedback(sectionId) {
+      const region = document.getElementById(sectionId + '-feedback');
+      region.replaceChildren();
+      region.className = '';
+      region.hidden = !state.feedback[sectionId];
+      if (region.hidden) return;
+      region.className = 'flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 py-2 pl-4 pr-2 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200';
+      const dismiss = button('', 'ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-md hover:bg-emerald-100 dark:hover:bg-emerald-900', () => {
+        delete state.feedback[sectionId];
+        paintFeedback(sectionId);
+        document.getElementById(sectionId + '-heading').focus();
+      }, { 'aria-label': 'Dismiss notification' });
+      dismiss.append(icon('close', 'h-4 w-4'));
+      region.append(icon('check'), el('span', '', state.feedback[sectionId]), dismiss);
+    }
+    function announce(message) {
+      state.feedback[state.section] = message;
+      paintFeedback(state.section);
+    }
+    function openModal(title, description, origin, wide = false) {
+      closeMenu();
+      const overlay = el('div', 'fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 dark:bg-black/70');
+      const dialog = el('div', 'flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 ' + (wide ? 'max-w-3xl' : 'max-w-[640px]'), null, { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'modal-title', 'aria-describedby': 'modal-description' });
+      const header = el('div', 'flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 p-5 dark:border-slate-700');
+      const heading = el('div', 'min-w-0');
+      heading.append(el('h2', 'break-words rounded text-lg font-semibold ' + focus, title, { id: 'modal-title', tabindex: '-1' }), el('p', 'mt-1 break-words text-xs leading-5 ' + muted, description, { id: 'modal-description' }));
+      const close = button('', 'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800', closeModal, { 'aria-label': 'Close dialog' });
+      close.append(icon('close'));
+      header.append(heading, close);
+      const body = el('div', 'min-h-0 overflow-y-auto overscroll-contain p-5');
+      const footer = el('div', 'flex shrink-0 flex-wrap justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-700 dark:bg-slate-800/50');
+      footer.append(button('Close', secondaryClass, closeModal));
+      dialog.append(header, body, footer);
+      overlay.append(dialog);
+      let startedOnBackdrop = false;
+      overlay.addEventListener('pointerdown', event => { startedOnBackdrop = event.target === overlay; });
+      overlay.addEventListener('click', event => { if (startedOnBackdrop && event.target === overlay) closeModal(); });
+      document.getElementById('modal-root').append(overlay);
+      document.getElementById('app').inert = true;
+      document.body.classList.add('overflow-hidden');
+      state.modal = { overlay, dialog, body, footer, origin };
+      document.getElementById('modal-title').focus();
+      return state.modal;
+    }
+    function closeModal() {
+      if (!state.modal) return;
+      const origin = state.modal.origin;
+      state.modal.overlay.remove();
+      state.modal = null;
+      document.getElementById('app').inert = false;
+      document.body.classList.remove('overflow-hidden');
+      const target = origin && (origin.isConnected ? origin : document.getElementById(origin.id));
+      (target || document.getElementById(state.section + '-heading')).focus({ preventScroll: true });
+    }
+    function detailsGrid(entries) {
+      const list = el('dl', 'grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2');
+      entries.forEach(([label, value, full]) => {
+        const field = el('div', 'min-w-0 ' + (full ? 'sm:col-span-2' : ''));
+        const dd = el('dd', 'mt-1.5 break-words text-sm leading-6 text-slate-800 dark:text-slate-200');
+        dd.append(value instanceof Node ? value : document.createTextNode(String(value)));
+        field.append(el('dt', 'text-xs font-medium ' + muted, label), dd);
+        list.append(field);
+      });
+      return list;
+    }
+    function showDetails(kind, record, origin) {
+      if (kind === 'users') {
+        const modal = openModal('User details', record.name, origin);
+        modal.body.append(detailsGrid([
+          ['User ID', record.id], ['Name', record.name], ['Company', record.company], ['Plan', record.plan], ['Email', record.email, true], ['Status', badge(record.status)], ['Joined date', date(record.joined)],
+          ['Assigned agents', agents.filter(agent => agent.owner === record.id).map(agent => agent.name + ' (' + agent.id + ')').join(', ') || 'None', true],
+          ['Rental contracts', rentals.filter(rental => rental.customer === record.id).map(rental => rental.id).join(', ') || 'None', true]
+        ]));
+      } else if (kind === 'agents') {
+        showConfiguration(record, origin);
+      } else if (kind === 'skills') {
+        const modal = openModal('Skill details', record.name, origin);
+        modal.body.append(detailsGrid([
+          ['Skill ID', record.id], ['Name', record.name], ['Short description', record.description, true], ['Capability', record.detail, true], ['Reference monthly price (USD)', money(record.price)], ['Usage count', 'Used by ' + assignedAgents(record).length + ' agents'], ['Assigned agents', assignedAgents(record).map(agent => agent.name).join(', ') || 'None', true]
+        ]), el('p', 'mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 ' + muted + ' dark:border-slate-700 dark:bg-slate-800', 'Reference pricing is illustrative. Each contract retains its own price snapshot.'));
+      } else if (kind === 'rentals') {
+        showContract(record, origin);
+      } else if (kind === 'errors') {
+        const modal = openModal('Error details · ' + record.id, 'Execution diagnostics and resolution status', origin, true);
+        modal.body.append(detailsGrid([
+          ['Error ID', record.id], ['Timestamp (UTC)', record.timestamp + ' UTC'], ['Agent', find(agents, record.agent).name + ' (' + record.agent + ')', true], ['Error type', record.type], ['Severity', badge(record.severity)], ['Description', record.description, true], ['Resolution', badge(record.resolution)]
+        ]), el('h3', 'mb-3 mt-6 text-sm font-semibold', 'Complete error trace'));
+        const trace = el('pre', 'max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200 bg-slate-50 p-4 font-mono text-xs leading-6 text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300', null, { tabindex: '0', 'aria-label': 'Complete error trace' });
+        trace.className += ' ' + focus;
+        trace.append(el('code', '', record.trace.join('\n')));
+        modal.body.append(trace);
+      }
+    }
+    function showConfiguration(agent, origin) {
+      const modal = openModal('Configure ' + agent.name, 'Fine-tune how this agent works. Changes are session-local.', origin);
+      const owner = find(users, agent.owner);
+      modal.body.append(detailsGrid([
+        ['Agent ID', agent.id], ['Status', badge(titleCase(agent.status))], ['Owner', owner.name + ' · ' + owner.company, true], ['Associated skills', chips(agent.skills), true]
+      ]));
+      const field = el('div', 'mt-6');
+      field.append(el('label', 'mb-2 block text-sm font-semibold', 'System prompt', { for: 'system-prompt' }));
+      const textarea = el('textarea', 'block w-full resize-y rounded-lg border border-slate-300 bg-white p-3 text-sm leading-6 text-slate-800 placeholder:text-slate-400 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-200 ' + focus, null, { id: 'system-prompt', rows: '8', 'aria-describedby': 'prompt-help prompt-count prompt-error', 'aria-invalid': 'false' });
+      textarea.value = agent.prompt;
+      const meta = el('div', 'mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] ' + muted);
+      const count = el('span', 'tabular-nums', agent.prompt.length + ' / 4,000 characters', { id: 'prompt-count' });
+      meta.append(el('span', '', 'Instructions are never executed or sent.', { id: 'prompt-help' }), count);
+      const error = el('p', 'mt-2 text-xs text-rose-600 dark:text-rose-300', '', { id: 'prompt-error', role: 'alert' });
+      error.hidden = true;
+      textarea.addEventListener('input', () => { count.textContent = textarea.value.length + ' / 4,000 characters'; });
+      field.append(textarea, meta, error);
+      modal.body.append(field);
+      modal.footer.replaceChildren(button('Cancel', secondaryClass, closeModal), button('Save changes', primaryClass, () => {
+        const value = textarea.value;
+        const invalid = !value.trim() ? 'Enter a system prompt with at least one non-whitespace character.' : value.length > 4000 ? 'The system prompt must be 4,000 characters or fewer.' : '';
+        textarea.setAttribute('aria-invalid', String(Boolean(invalid)));
+        error.hidden = !invalid;
+        error.textContent = invalid;
+        if (invalid) { textarea.focus(); return; }
+        agent.prompt = value;
+        closeModal();
+        announce('System prompt saved for ' + agent.name + '.');
+      }));
+    }
+    function showContract(rental, origin) {
+      const customer = find(users, rental.customer);
+      const agent = find(agents, rental.agent);
+      const modal = openModal('Contract details · ' + rental.id, 'Fixed-term rental · All amounts in USD', origin, true);
+      modal.body.append(detailsGrid([
+        ['Customer', customer.name], ['Company', customer.company], ['Email', customer.email, true], ['Rented agent', agent.name + ' (' + agent.id + ')'], ['Contract status', badge(rentalStatus(rental))], ['Start date', date(rental.start)], ['End date', date(rental.end)], ['Payment date', date(rental.paid)], ['Currency', 'USD']
+      ]), el('h3', 'mb-3 mt-6 text-sm font-semibold', 'Itemized price breakdown'));
+      const table = el('table', 'w-full text-left text-sm');
+      table.append(el('caption', 'sr-only', 'Itemized prices for contract ' + rental.id));
+      const head = el('thead', 'border-y border-slate-200 bg-slate-50 text-xs ' + muted + ' dark:border-slate-700 dark:bg-slate-800');
+      const row = el('tr');
+      row.append(el('th', 'px-3 py-3 font-medium', 'Item', { scope: 'col' }), el('th', 'px-3 py-3 text-right font-medium', 'Amount (USD)', { scope: 'col' }));
+      head.append(row);
+      const body = el('tbody', 'divide-y divide-slate-100 dark:divide-slate-800');
+      const line = (label, amount, strong = false) => {
+        const tr = el('tr', strong ? 'font-semibold' : '');
+        tr.append(el('th', 'px-3 py-3 text-left ' + (strong ? 'font-semibold' : 'font-normal'), label, { scope: 'row' }), el('td', 'whitespace-nowrap px-3 py-3 text-right tabular-nums', amount));
+        body.append(tr);
+      };
+      line('Base agent · ' + agent.name, money(rental.base));
+      rental.skills.forEach(skill => line(find(skills, skill.id).name, money(skill.price)));
+      line('Gross subtotal', money(subtotal(rental)));
+      line('Coupon code', rental.coupon || 'None');
+      line('Discount', '- ' + money(rental.discount));
+      line('Contract total', money(total(rental)), true);
+      line('Total paid', money(total(rental)), true);
+      table.append(head, body);
+      modal.body.append(table, el('p', 'mt-4 text-xs leading-5 ' + muted, 'Prices cover the entire contract term. No proration, taxes, or additional fees.'));
+    }
+    function blockingReferences(kind, record) {
+      if (kind === 'users') return [
+        ...agents.filter(agent => agent.owner === record.id).map(agent => agent.id + ' · ' + agent.name),
+        ...rentals.filter(rental => rental.customer === record.id).map(rental => rental.id + ' · ' + find(agents, rental.agent).name + ' contract')
+      ];
+      if (kind === 'agents') return [
+        ...rentals.filter(rental => rental.agent === record.id).map(rental => rental.id + ' · rental contract'),
+        ...errors.filter(error => error.agent === record.id).map(error => error.id + ' · ' + error.type)
+      ];
+      return [
+        ...assignedAgents(record).map(agent => agent.id + ' · ' + agent.name),
+        ...rentals.filter(rental => rental.skills.some(skill => skill.id === record.id)).map(rental => rental.id + ' · rental contract')
+      ];
+    }
+    function showDelete(kind, record, origin) {
+      const references = blockingReferences(kind, record);
+      const modal = openModal('Delete ' + record.name + '?', 'Review this action before continuing.', origin);
+      const explanation = el('div');
+      const paintReason = refs => {
+        explanation.replaceChildren();
+        if (refs.length) {
+          const warning = el('div', 'rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200');
+          warning.append(el('p', 'font-semibold', 'This record cannot be deleted.'), el('p', 'mt-2 text-sm leading-6', 'Existing and historical relationships must be preserved. The following records depend on it:'));
+          const list = el('ul', 'mt-3 list-disc space-y-1 pl-5 text-xs leading-5');
+          refs.forEach(reference => list.append(el('li', '', reference)));
+          warning.append(list);
+          explanation.append(warning);
+        } else {
+          explanation.append(el('p', 'leading-6 text-slate-600 dark:text-slate-300', 'This removes the user from this prototype session only.'));
+        }
+      };
+      paintReason(references);
+      modal.body.append(explanation);
+      const confirm = button('Delete', dangerClass, () => {
+        const currentReferences = blockingReferences(kind, record);
+        if (currentReferences.length) {
+          paintReason(currentReferences);
+          confirm.disabled = true;
+          return;
+        }
+        const collection = { users, agents, skills }[kind];
+        collection.splice(collection.indexOf(record), 1);
+        renderSection(kind);
+        closeModal();
+        announce(record.name + ' deleted from this prototype session.');
+      });
+      confirm.disabled = references.length > 0;
+      modal.footer.replaceChildren(button('Cancel', secondaryClass, closeModal), confirm);
+    }
+    function resolveError(record, origin) {
+      record.resolution = 'Resolved';
+      renderSection('errors');
+      document.getElementById(origin.id).focus({ preventScroll: true });
+      announce('Error ' + record.id + ' marked as resolved.');
+    }
+
+    document.addEventListener('click', event => {
+      if (state.menu && !state.menu.container.contains(event.target)) closeMenu();
+    });
+    document.addEventListener('focusin', event => {
+      if (state.menu && !state.menu.container.contains(event.target)) closeMenu();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        if (state.modal) { event.preventDefault(); closeModal(); }
+        else if (state.menu) { event.preventDefault(); closeMenu(true); }
+      }
+      if (event.key === 'Tab' && state.modal) {
+        const controls = [...state.modal.dialog.querySelectorAll('button:not(:disabled), textarea, [tabindex="0"]')].filter(node => !node.hidden);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && (document.activeElement === first || document.activeElement.id === 'modal-title')) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    });
+    document.getElementById('brand-icon').append(icon('brand', 'h-6 w-6'));
+    const themeToggle = document.getElementById('theme-toggle');
+    themeToggle.append(icon('moon', 'h-[18px] w-[18px]'));
+    themeToggle.addEventListener('click', () => {
+      const dark = document.documentElement.classList.toggle('dark');
+      themeToggle.setAttribute('aria-pressed', String(dark));
+      themeToggle.replaceChildren(icon(dark ? 'sun' : 'moon', 'h-[18px] w-[18px]'));
+    });
+    destinations.forEach(destination => {
+      const nav = button('', '', () => navigate(destination.id), { id: 'nav-' + destination.id, 'aria-label': destination.name });
+      nav.append(icon(destination.icon, 'h-[18px] w-[18px]'), el('span', 'hidden md:block', destination.name));
+      document.getElementById('navigation').append(nav);
+      renderSection(destination.id);
+    });
+    navigate('dashboard');
+    document.getElementById('dashboard-heading').blur();
+  </script>
+</body>
+</html>

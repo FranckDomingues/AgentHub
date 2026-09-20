@@ -1,41 +1,49 @@
-# HTML Hello
+# AgentHub Admin
 
-The most basic boilerplate for any 4Geeks Academy student, start your very first website from scratch.
+A desktop-first internal administration prototype for AgentHub, a platform for
+renting preconfigured AI agents with reusable skills.
 
-> There is a video tutorial on [how to use this template to create your very first website here](https://youtu.be/dfbDCMu_p-0).
+## Preview
 
-## What to do next?
+Open `index.html` in a browser, or serve the repository with Python:
 
-Create an `index.html` file with the [basic HTML structure](http://4geeks.com/lesson/what-is-html-learn-html#page-structure) and see it live by running a web-server using the following command:
-
-```bash
-$ pip3 install flask && python3 server.py
+```sh
+python3 -m http.server 3000
 ```
 
-- You can create as many HTML files as you want.
-- You can also create CSS files and import them into your website using a `<link>` tag placed between the `<head></head>` tags, like this:
+Then visit `http://localhost:3000`. Internet access is required for the
+Tailwind v3 Play CDN. There are no package dependencies or build steps.
 
-```html
-<head>
-  ...
-  <link rel="stylesheet" type="text/css" href="styles.css">
-  ...
-</head>
-```
+## Included
 
-- If you want to use Tailwind CSS, add it optionally via the official Tailwind CSS v4 CDN inside the same `<head>`:
+- Dashboard with September 2026 financial and operational metrics and an
+  explicitly labeled weekly activity placeholder.
+- User Management, Agent Management, Skills, Agent Rentals, and Error Log.
+- Record details, itemized contracts, complete execution traces, editable
+  system prompts, and independently expandable agent skills.
+- Guarded deletion, error acknowledgment, accessible dialogs and dropdowns,
+  and light/dark themes.
+- Persistent navigation at 1440px, 1024px, and 768px; tables scroll locally.
 
-```html
-<head>
-  ...
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <link rel="stylesheet" type="text/css" href="styles.css">
-  ...
-</head>
-```
+The implementation is a single semantic HTML document with Tailwind CDN
+utilities, embedded SVG icons, and vanilla JavaScript. It follows
+[SPECS.md](./SPECS.md), including its authoritative synthetic fixture.
 
-### Contributors
+## Prototype behavior
 
-This template was built as part of the [Full Stack Developer course](https://4geeksacademy.com/us/coding-bootcamps/part-time-full-stack-developer) at [4Geeks Academy Coding Bootcamp](https://4geeksacademy.com/us/coding-bootcamp) by [Alejandro Sanchez](https://twitter.com/alesanchezr) and [many other contributors](https://github.com/4GeeksAcademy/html-hello/graphs/contributors).
+All changes are held in memory and reset on reload, including theme, prompts,
+deletions, and error resolutions. No backend, authentication, real billing,
+agent execution, or persistent storage is connected.
 
-You can find other templates and resources like this at the [school's GitHub page](https://github.com/4geeksacademy/).
+Try these flows:
+
+1. Open **Agent Management**, expand an agent's skills, and select
+   **Configure** from its three-dot menu. Edit and save its system prompt.
+2. Open **Agent Rentals** and select **View Details** to see a contract's
+   individual skill prices, discounts, and total.
+3. Open **Error Log** to inspect a complete trace or mark an open record
+   resolved. This does not change the agent's health.
+4. Open **User Management** and delete Emma Dubois, the unlinked invited
+   user. Linked records are protected with visible relationship explanations.
+5. Toggle dark mode, navigate between sections, and reload to restore the
+   original light-theme fixture.
